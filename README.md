@@ -1,6 +1,8 @@
 Functional-style Programming in C++14
 ====
 
+Compiles using `clang++-3.5 -std=c++1y` and `clang++-3.6 -std=c++14`. No luck with g++-4.9.
+
 Currying
 ----
 
