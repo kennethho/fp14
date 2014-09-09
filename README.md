@@ -9,30 +9,31 @@ Currying
 ```c++
 #include <fp14/curry.hpp>
 
-#include <assert>
+#include <cassert>
 
 int avg3(int a, int b, int c)
 {
   return (a + b + c) / 3;
 }
 
-auto max2 = [](int a, int b)
-{
-  return a < b ? b : a;
-};
-
 int main()
 {
-  using fp14::curry;
+  using namespace fp14;
 
   auto avg = curry(avg3)(1)(2)(3);
   assert(avg == 2);
 
-  auto a = curry(max2);
+  auto a = curry(
+    // fp14::v2::curry() works with polymorphic lambdas!
+    [](auto a, auto b)
+    {
+      return a < b ? b : a;
+    });
+
   auto b = a(1);
-  auto c = b(2)
+  auto c = b(2);
   assert(c == 2);
-  
+
   return 0;
 }
 ```
