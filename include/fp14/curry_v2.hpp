@@ -94,7 +94,8 @@ auto curry_impl(
   std::tuple<Args...> curried_arg_pack,
   DisableIfCallableWithArgPack<Func, Args...>* = nullptr)
 {
-  return [func = std::forward<Func>(func), curried_arg_pack](auto arg) {
+  return [func = std::forward<Func>(func),
+          curried_arg_pack = std::move(curried_arg_pack)](auto arg) {
     return curry_impl(
       std::forward<Func>(func),
       std::tuple_cat(std::move(curried_arg_pack), std::make_tuple(std::move(arg))));
