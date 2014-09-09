@@ -24,7 +24,7 @@ int main()
   assert(avg == 2);
 
   auto a = curry(
-    // fp14::v2::curry() works with polymorphic lambdas!
+    // fp14::v2::curry() works with generic (polymorphic) lambdas!
     [](auto a, auto b)
     {
       return a < b ? b : a;
