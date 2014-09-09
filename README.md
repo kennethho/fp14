@@ -23,6 +23,8 @@ auto max2 = [](int a, int b)
 
 int main()
 {
+  using fp14::curry;
+
   auto avg = curry(avg3)(1)(2)(3);
   assert(avg == 2);
 
