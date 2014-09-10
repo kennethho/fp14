@@ -10,30 +10,11 @@ inline namespace v2 {
 
 namespace detail {
 
-template <size_t... N>
-struct seq {};
-
-template <size_t... N, size_t... M>
-auto operator+ (seq<N...>, seq<M...>)
-{
-  return seq<N..., M...>();
-}
-
-template <size_t N>
-struct make_seq
-{
-  using type = decltype(typename make_seq<N-1>::type{} + seq<N>{});
-};
-
-template <>
-struct make_seq<0>
-{
-  using type = seq<0>;
-};
-
-
 template <class Func, class... Args, size_t... N>
-auto call_with_arg_pack_impl(Func func, std::tuple<Args...> arg_pack, seq<N...>)
+auto call_with_arg_pack_impl(
+  Func func,
+  std::tuple<Args...> arg_pack,
+  std::index_sequence<N...>)
 {
   return func(std::forward<Args>(std::get<N>(arg_pack))...);
 }
@@ -41,7 +22,7 @@ auto call_with_arg_pack_impl(Func func, std::tuple<Args...> arg_pack, seq<N...>)
 template <class Func, class... Args>
 auto call_with_arg_pack(Func&& func, std::tuple<Args...> arg_pack)
 {
-  using call_seq = typename make_seq<sizeof...(Args) - 1>::type;
+  using call_seq = typename std::make_index_sequence<sizeof...(Args)>;
   return call_with_arg_pack_impl(
     std::forward<Func>(func), std::move(arg_pack), call_seq{});
 }
