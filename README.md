@@ -68,10 +68,13 @@ void callable_with()
   // won't compile
   // curry(avg3)(1)(2)(3)(4);
 
-  // but this does, though malformed
-  curry(avg3)(1)(2)("ha")(4)(5);
+  // but this does, though malformed...
+  // one shortcoming of fp14::curry() is that it couldn't
+  // tell the difference between a malformed call and a
+  // call that's expecting more arguments
+  curry(avg3)(1)(2)("ha");
 
-  // callable_with(arg) detects malformed calls
+  // callable_with(arg) helps making sure calls are legit
   assert( curry(avg3)(1)(2)(callable_with(3)) == true );
   assert( curry(avg3)(1)(2)(callable_with("ha")) == false );
 }
