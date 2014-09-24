@@ -57,6 +57,10 @@ void uncurrying()
 
   auto c = b(uncurry);
   assert(c(1, 2, 3) == 2);
+  
+  // this only holds if avg3 is a function (pointer),
+  // but not a closure nor functor (object)
+  assert(c == avg3);
 }
 
 void callable_with()
