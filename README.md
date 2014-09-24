@@ -10,30 +10,75 @@ Currying
 #include <fp14/curry.hpp>
 
 #include <cassert>
+#include <utility>
+#include <functional>
+
+using namespace fp14;
+using namespace std;
 
 int avg3(int a, int b, int c)
 {
   return (a + b + c) / 3;
 }
 
-int main()
+void basic_currying()
 {
-  using namespace fp14;
-
   auto avg = curry(avg3)(1)(2)(3);
   assert(avg == 2);
+}
 
-  auto a = curry(
-    // fp14::v2::curry() works with generic (polymorphic) lambdas!
-    [](auto a, auto b)
+void reference_semantics()
+{
+  auto swap2 =
+    [](auto&& x, auto&& y)
     {
-      return a < b ? b : a;
-    });
+      auto tmp = forward<decltype(x)>(x);
+      x = forward<decltype(y)>(y);
+      y = move(tmp);
+    };
 
-  auto b = a(1);
-  auto c = b(2);
-  assert(c == 2);
+  int x = 0, y = 1;
 
+  auto a = curry(swap2);
+  a(0)(1); // nothing's changed
+
+  a(x)(y); // like above, nothing's changed
+  assert(x == 0 && y == 1);
+  
+  a(ref(x))(ref(y)); // use std::ref for reference semantics
+  assert(x == 1 && y == 0);
+}
+
+void uncurrying()
+{
+  auto a = curry(avg3)(1);
+  auto b = a(uncurry);
+  assert(b(1)(2)(3) == 2);
+
+  auto c = b(uncurry);
+  assert(c(1, 2, 3) == 2);
+}
+
+void callable_with()
+{
+  // won't compile
+  // curry(avg3)(1)(2)(3)(4);
+
+  // but this does, though malformed
+  curry(avg3)(1)(2)("ha")(4)(5);
+
+  // callable_with(arg) detects malformed calls
+  assert( curry(avg3)(1)(2)(callable_with(3)) == true );
+  assert( curry(avg3)(1)(2)(callable_with("ha")) == false );
+}
+
+int main()
+{
+  basic_currying();
+  reference_semantics();
+  uncurrying();
+  callable_with();
+  
   return 0;
 }
 ```
