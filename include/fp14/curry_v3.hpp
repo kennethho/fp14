@@ -114,9 +114,6 @@ decltype(auto) call_with_argpack(
 template <class Arg>
 struct callable_with_t
 {
-  constexpr callable_with_t(Arg&& x)
-    : arg(std::move(x))
-  {}
   constexpr callable_with_t(const Arg& x)
     : arg(x)
   {}
@@ -168,20 +165,18 @@ template <
   class CurriedArgpack,
   class AddedArg>
 constexpr auto curry_dispatch(
-  const Func&,
-  const CurriedArgpack&,
-  const AddedArg& added_arg,
+  Func&& func,
+  CurriedArgpack&& curried_argpack,
+  AddedArg&& added_arg,
   std::enable_if_t<
     decltype(is_callable_with(added_arg))::value
   >* = nullptr)
 {
   return decltype(is_callable_with_argpack(
-    std::declval<Func>(),
-    std::declval<
-      decltype(
-        argpack_push(
-          std::declval<CurriedArgpack>(),
-          std::declval<AddedArg>()))>())){};
+    std::forward<Func>(func),
+      argpack_push(
+        std::forward<CurriedArgpack>(curried_argpack),
+        std::move(unwrap_callable_with(std::forward<AddedArg>(added_arg)))))){};
 }
 
 template <
@@ -215,7 +210,7 @@ constexpr auto curry_dispatch(
         func,
         argpack_push(
           std::forward<CurriedArgpack>(curried_argpack),
-          unwrap_callable_with(std::forward<AddedArg>(added_arg)))))::value
+          std::forward<AddedArg>(added_arg))))::value
   >* = nullptr);
 
 
@@ -305,7 +300,7 @@ constexpr auto curry_dispatch(
         func,
         argpack_push(
           std::forward<CurriedArgpack>(curried_argpack),
-          unwrap_callable_with(std::forward<AddedArg>(added_arg)))))::value
+          std::forward<AddedArg>(added_arg))))::value
   >*)
 {
   return call_with_argpack(
