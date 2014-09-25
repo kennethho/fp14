@@ -238,7 +238,7 @@ constexpr auto curry_arg_expected(
 }
 
 template <class Func, class CurriedArgpack>
-Func uncurry(
+constexpr Func uncurry(
   Func&& func,
   CurriedArgpack&&,
   std::enable_if_t<
@@ -249,7 +249,7 @@ Func uncurry(
 }
 
 template <class Func, class CurriedArgpack>
-auto uncurry(
+constexpr auto uncurry(
   Func&& func,
   CurriedArgpack&& curried_argpack,
   std::enable_if_t<
@@ -272,13 +272,12 @@ template <
   class Func,
   class CurriedArgpack,
   class AddedArg>
-auto curry_dispatch(
+constexpr auto curry_dispatch(
   Func&& func,
   CurriedArgpack&& curried_argpack,
   AddedArg&& added_arg,
   std::enable_if_t<
-    decltype(
-      is_uncurry(added_arg))::value
+    decltype(is_uncurry(added_arg))::value
   >* = nullptr)
 {
   return uncurry(
