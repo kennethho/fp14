@@ -114,11 +114,7 @@ decltype(auto) call_with_argpack(
 template <class Arg>
 struct callable_with_t
 {
-  constexpr callable_with_t(const Arg& x)
-    : arg(x)
-  {}
-
-  Arg arg;
+  using arg_type = std::add_rvalue_reference_t<Arg>;
 };
 
 inline constexpr std::false_type is_callable_with(...)
@@ -131,30 +127,15 @@ constexpr std::true_type is_callable_with(const callable_with_t<Arg>&)
   return std::true_type{};
 }
 
-template <class Arg>
-auto unwrap_callable_with(Arg&& arg)
-{
-  return std::forward<Arg>(arg);
-}
-template <class Arg>
-auto unwrap_callable_with(callable_with_t<Arg>&& callable_with)
-{
-  return std::move(callable_with.arg);
-}
-template <class Arg>
-auto unwrap_callable_with(const callable_with_t<Arg>& callable_with)
-{
-  return callable_with.arg;
-}
 
 
 // uncurry
-struct uncurry_t
-{};
+struct uncurry_t {};
 
 template <class Arg>
 constexpr auto is_uncurry(const Arg&)
 {
+  // It appears there is no `std::is_same_t<>` alias
   return typename std::is_same<Arg, uncurry_t>::type{};
 }
 
@@ -176,7 +157,7 @@ constexpr auto curry_dispatch(
     std::forward<Func>(func),
       argpack_push(
         std::forward<CurriedArgpack>(curried_argpack),
-        std::move(unwrap_callable_with(std::forward<AddedArg>(added_arg)))))){};
+        std::declval<typename AddedArg::arg_type>()))){};
 }
 
 template <
@@ -193,7 +174,9 @@ constexpr auto curry_dispatch(
     !decltype(
       is_callable_with_argpack(
         func,
-        argpack_push(std::move(curried_argpack), unwrap_callable_with(std::move(added_arg)))))::value
+        argpack_push(
+          std::forward<CurriedArgpack>(curried_argpack),
+          std::forward<AddedArg>(added_arg))))::value
   >* = nullptr);
 
 template <
@@ -306,7 +289,7 @@ constexpr auto curry_dispatch(
     std::forward<Func>(func),
     argpack_push(
       std::forward<CurriedArgpack>(curried_argpack),
-      unwrap_callable_with(std::forward<AddedArg>(added_arg))));
+      std::forward<AddedArg>(added_arg)));
 }
 
 
@@ -324,7 +307,9 @@ constexpr auto curry_dispatch(
     !decltype(
       is_callable_with_argpack(
         func,
-        argpack_push(std::move(curried_argpack), unwrap_callable_with(std::move(added_arg)))))::value
+        argpack_push(
+          std::forward<CurriedArgpack>(curried_argpack),
+          std::forward<AddedArg>(added_arg))))::value
   >*)
 {
   return
@@ -355,9 +340,9 @@ auto curry(Func&& func)
 }
 
 template <class Arg>
-detail::callable_with_t<Arg> callable_with(Arg&& arg)
+detail::callable_with_t<Arg> callable_with(const Arg&)
 {
-  return detail::callable_with_t<Arg>{std::forward<Arg>(arg)};
+  return detail::callable_with_t<Arg>{};
 }
 
 namespace {
