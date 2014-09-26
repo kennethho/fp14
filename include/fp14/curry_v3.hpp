@@ -93,13 +93,7 @@ decltype(auto) call_with_argpack_impl(
 template <class Func, class Argpack>
 decltype(auto) call_with_argpack(
   Func&& func,
-  Argpack&& argpack,
-  std::enable_if_t<
-    decltype(
-      is_callable_with_argpack(
-        func,
-        std::forward<Argpack>(argpack)))::value
-  >* = nullptr)
+  Argpack&& argpack)
 {
   return
     call_with_argpack_impl(
@@ -190,11 +184,18 @@ constexpr auto curry_dispatch(
   std::enable_if_t<
     decltype(
       is_callable_with_argpack(
-        func,
+        std::forward<Func>(func),
         argpack_push(
           std::forward<CurriedArgpack>(curried_argpack),
           std::forward<AddedArg>(added_arg))))::value
-  >* = nullptr);
+  >* = nullptr)
+{
+  return call_with_argpack(
+    std::forward<Func>(func),
+    argpack_push(
+      std::forward<CurriedArgpack>(curried_argpack),
+      std::forward<AddedArg>(added_arg)));
+}
 
 
 template <
@@ -211,11 +212,11 @@ constexpr auto curry_arg_expected(
       curried_argpack =
         argpack_push(
           std::forward<CurriedArgpack>(curried_argpack),
-          std::forward<AddedArg>(added_arg))](auto&& added_arg)
+          std::forward<AddedArg>(added_arg))](auto&& added_arg) mutable
     {
       return curry_dispatch(
-        std::move(func),
-        std::move(curried_argpack),
+        func,
+        curried_argpack,
         std::forward<decltype(added_arg)>(added_arg));
     };
 }
@@ -242,11 +243,11 @@ constexpr auto uncurry(
   return
     [func = std::forward<Func>(func),
      curried_argpack = argpack_pop(std::forward<CurriedArgpack>(curried_argpack))]
-     (auto&& added_arg) {
+     (auto&& added_arg) mutable {
 
     return curry_dispatch(
-      std::move(func),
-      std::move(curried_argpack),
+      func,
+      curried_argpack,
       std::forward<decltype(added_arg)>(added_arg));
     };
 }
@@ -266,30 +267,6 @@ constexpr auto curry_dispatch(
   return uncurry(
     std::forward<Func>(func),
     std::forward<CurriedArgpack>(curried_argpack));
-}
-
-template <
-  class Func,
-  class CurriedArgpack,
-  class AddedArg>
-constexpr auto curry_dispatch(
-  Func&& func,
-  CurriedArgpack&& curried_argpack,
-  AddedArg&& added_arg,
-  std::enable_if_t<
-    decltype(
-      is_callable_with_argpack(
-        func,
-        argpack_push(
-          std::forward<CurriedArgpack>(curried_argpack),
-          std::forward<AddedArg>(added_arg))))::value
-  >*)
-{
-  return call_with_argpack(
-    std::forward<Func>(func),
-    argpack_push(
-      std::forward<CurriedArgpack>(curried_argpack),
-      std::forward<AddedArg>(added_arg)));
 }
 
 
@@ -323,9 +300,9 @@ template <class Func>
 auto curry(Func&& func)
 {
   return
-    [func = std::forward<Func>(func)](auto&& added_arg) {
+    [func = std::forward<Func>(func)](auto&& added_arg) mutable {
       return curry_dispatch(
-        std::move(func),
+        func,
         std::tuple<>{},
         std::forward<decltype(added_arg)>(added_arg));
     };
