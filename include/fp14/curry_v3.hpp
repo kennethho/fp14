@@ -12,7 +12,7 @@ namespace detail {
 
 // argpack
 template <class Argpack, class AddedArg>
-constexpr decltype(auto) argpack_push(Argpack&& argpack, AddedArg&& added_arg)
+constexpr auto argpack_push(Argpack&& argpack, AddedArg&& added_arg)
 {
   return
     std::tuple_cat(
@@ -99,7 +99,7 @@ decltype(auto) call_with_argpack(
     call_with_argpack_impl(
       std::forward<Func>(func),
       std::forward<Argpack>(argpack),
-      std::make_index_sequence<std::tuple_size<Argpack>::value>());
+      std::make_index_sequence<std::tuple_size<std::remove_reference_t<Argpack>>::value>());
 }
 
 
@@ -177,7 +177,7 @@ template <
   class Func,
   class CurriedArgpack,
   class AddedArg>
-constexpr auto curry_dispatch(
+constexpr decltype(auto) curry_dispatch(
   Func&& func,
   CurriedArgpack&& curried_argpack,
   AddedArg&& added_arg,
@@ -212,7 +212,7 @@ constexpr auto curry_arg_expected(
       curried_argpack =
         argpack_push(
           std::forward<CurriedArgpack>(curried_argpack),
-          std::forward<AddedArg>(added_arg))](auto&& added_arg) mutable
+          std::forward<AddedArg>(added_arg))](auto&& added_arg) mutable -> decltype(auto)
     {
       return curry_dispatch(
         func,
@@ -243,12 +243,12 @@ constexpr auto uncurry(
   return
     [func = std::forward<Func>(func),
      curried_argpack = argpack_pop(std::forward<CurriedArgpack>(curried_argpack))]
-     (auto&& added_arg) mutable {
-
-    return curry_dispatch(
-      func,
-      curried_argpack,
-      std::forward<decltype(added_arg)>(added_arg));
+     (auto&& added_arg) mutable  -> decltype(auto)
+    {
+      return curry_dispatch(
+        func,
+        curried_argpack,
+        std::forward<decltype(added_arg)>(added_arg));
     };
 }
 
@@ -300,7 +300,7 @@ template <class Func>
 auto curry(Func&& func)
 {
   return
-    [func = std::forward<Func>(func)](auto&& added_arg) mutable {
+    [func = std::forward<Func>(func)](auto&& added_arg) mutable ->decltype(auto) {
       return curry_dispatch(
         func,
         std::tuple<>{},
