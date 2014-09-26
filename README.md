@@ -45,7 +45,7 @@ void value_semantics()
   int x = 0, y = 1;
 
   auto a = curry(swap2);
-  // Nothing's changes
+  // Nothing changes
   a(0)(1);
 
   // Like above, no visible side-effect
