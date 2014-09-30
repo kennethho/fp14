@@ -34,10 +34,18 @@ auto identity =
     return x;
   };
 
-void basic_currying()
+void currying()
 {
-  auto avg = curry(avg3)(1)(2)(3);
-  assert( avg == 2 );
+  assert( curry(avg3)(1)(2)(3) == 2 );
+  assert( curry(avg3)(1, 2)(3) == 2 );
+  assert( curry(avg3)(1)(2, 3) == 2 );
+  assert( curry(avg3)(1, 2, 3) == 2 );
+
+  auto a = curry(avg3)(1);
+  assert( a(2, 3) == 2 );
+
+  auto b = a(2);
+  assert( b(3) == 2 );
 }
 
 void value_semantics()
@@ -65,7 +73,7 @@ void referece_semantics()
   assert( x == 1 && y == 0 );
 
   decltype(auto) z = curry(identity)(cref(x));
-  assert( &x == &z );
+  assert( x == z && &x == &z );
 
 }
 
@@ -105,7 +113,7 @@ void callable_with()
 
 int main()
 {
-  basic_currying();
+  currying();
   value_semantics();
   referece_semantics();
   uncurrying();
