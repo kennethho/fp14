@@ -50,31 +50,38 @@ void currying()
 
 void value_semantics()
 {
-  int x = 0, y = 1;
+  // fp14 assumes and supports value semantics by default
 
   auto a = curry(swap2);
-  // Nothing changes
+  // Valid, but nothing changes
   a(0)(1);
+
+  int x = 0, y = 1;
 
   // Like above, no visible side-effect
   auto b = a(x);
   b(y);
   assert( x == 0 && y == 1 );
+
+  // `z` and `x` are two instances of the same value
+  decltype(auto) z = curry(identity)(x);
+  assert( x == z && &x != &z );
+  
 }
 
 void referece_semantics()
 {
-  int x = 0, y = 1;
+  // For reference semantics, use `std::ref()` and `std::cref()`
 
-  // Use `std::ref()` and `std::cref()` for reference semantics
+  int x = 0, y = 1;
 
   // Now `x` and `y` can be swapped
   curry(swap2)(ref(x))(ref(y));
   assert( x == 1 && y == 0 );
 
+  // `z` is a reference to `x`
   decltype(auto) z = curry(identity)(cref(x));
   assert( x == z && &x == &z );
-
 }
 
 void uncurrying()
@@ -84,10 +91,10 @@ void uncurrying()
   assert( b(1)(2)(3) == 2 );
 
   auto c = b(uncurry);
+  // This only holds true, if avg3 is a function (pointer), but not a
+  // closure nor a functor (object)
   assert( c == avg3 );
 
-  // This only holds true, if avg3 is a function (pointer), but not a
-  // closure nor functor (object)
   assert(c(1, 2, 3) == 2);
 }
 
@@ -102,13 +109,14 @@ void callable_with()
   // One shortcoming of fp14::curry() is that it couldn't tell the
   // difference between a malformed call and a curry function that's
   // expecting more arguments
-  curry(avg3)(1)(2)("3")(4);
+  curry(avg3)(1)('2')("3")(4);
   auto malformed = curry(avg3)(1)(2)("3");
   malformed(4);
 
   // callable_with(arg) helps making sure calls are legit
-  assert( curry(avg3)(1)(2)(callable_with(3)) == true );
-  assert( curry(avg3)(1)(2)(callable_with("ha")) == false );
+  assert( curry(avg3)( 1 )(2)(callable_with("3")) == false );
+  assert( curry(avg3)('1')(2)(callable_with( 3 )) == false );
+  assert( curry(avg3)( 1 )(2)(callable_with( 3 )) == true  );
 }
 
 int main()
